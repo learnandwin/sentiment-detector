@@ -19,19 +19,21 @@ sentiment_threshold = 0.3
 st.set_page_config(page_title="Sentiment Spike Detector", layout="wide")
 st.title("📊 Real-Time Sentiment Spike Detector (X / Twitter)")
 
-# Función para scrapear tweets usando subprocess
+# Función para scrapear tweets usando snscrape vía terminal
 @st.cache_data(show_spinner=False)
 def scrape_tweets(symbol, minutes):
     since_time = (datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)).isoformat(timespec='seconds') + "Z"
     query = f'{symbol} {" OR ".join(query_keywords)} since:{since_time} lang:en'
-    cmd = f"snscrape --jsonl --max-results 100 'twitter-search \"{query}\"'"
+    cmd = ["snscrape", "--jsonl", "--max-results", "100", f"twitter-search:{query}"]
 
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         tweets_raw = result.stdout.strip().split("\n")
         tweets = []
 
         for line in tweets_raw:
+            if not line.strip():
+                continue
             tweet_data = json.loads(line)
             tweets.append({
                 "date": tweet_data["date"],
@@ -42,7 +44,7 @@ def scrape_tweets(symbol, minutes):
         return tweets
 
     except subprocess.CalledProcessError as e:
-        st.error(f"❌ Error ejecutando snscrape: {e}")
+        st.error(f"❌ Error ejecutando snscrape para {symbol}: {e}")
         return []
 
 # Función de análisis de sentimiento
