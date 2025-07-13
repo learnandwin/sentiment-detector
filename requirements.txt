@@ -1,0 +1,6 @@
+snscrape
+pandas
+yfinance
+textblob
+streamlit
+plotly
